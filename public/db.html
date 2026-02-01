@@ -1,3 +1,4 @@
+<!-- /public/db.html -->
 <!doctype html>
 <html lang="ko">
 <head>
@@ -34,6 +35,18 @@
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">분류</div>
                 <select id="fCategory"></select>
               </label>
+
+              <label class="f">
+                <div class="muted" style="font-size:12px; margin-bottom:6px;">정렬</div>
+                <select id="fSort">
+                  <option value="newest">최신순</option>
+                  <option value="updated_desc">최근수정순</option>
+                  <option value="rating_desc">평점 높은순</option>
+                  <option value="rating_asc">평점 낮은순</option>
+                  <option value="name_asc">이름순</option>
+                </select>
+              </label>
+
               <label class="f">
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">근무상태</div>
                 <select id="fWork">
@@ -44,10 +57,12 @@
                   <option value="unknown">미정</option>
                 </select>
               </label>
+
               <label class="f grow">
                 <div class="muted" style="font-size:12px; margin-bottom:6px;">검색</div>
                 <input id="fQuery" placeholder="이름 / 유저ID / 특기" />
               </label>
+
               <div class="f" style="display:flex; gap:10px; align-items:flex-end;">
                 <button class="btn" id="btnSearch" type="button">검색</button>
                 <button class="btn ghost" id="btnReset" type="button">초기화</button>
@@ -70,7 +85,7 @@
 
 <style>
 /* /public/db.html inline style */
-.fgrid{ display:grid; grid-template-columns: 180px 180px 1fr auto; gap: 10px; align-items:end; }
+.fgrid{ display:grid; grid-template-columns: 180px 180px 180px 1fr auto; gap: 10px; align-items:end; }
 .f select, .f input{
   width:100%;
   border:1px solid rgba(11,18,32,.14);
