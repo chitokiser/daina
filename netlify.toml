@@ -1,0 +1,9 @@
+# /netlify.toml
+[build]
+  publish = "public"
+
+# 새로고침/직접URL 접근 시 404 방지(원치 않으면 삭제)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
