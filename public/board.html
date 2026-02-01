@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Daina · 게시판</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="./assets/images/dainalogo64x64.png" />
+  <link rel="apple-touch-icon" href="./assets/images/dainalogo64x64.png" />
+  <link rel="stylesheet" href="./assets/css/app.css" />
+  
+  <script defer src="./assets/js/partials.js"></script>
+  <script type="module" defer src="./assets/js/main.js"></script>
+  <script type="module" defer src="./assets/js/boardPage.js"></script>
+</head>
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+<main class="main">
+  <div class="container">
+
+    <section class="panel">
+      <div class="hrow">
+        <div>
+          <h1 class="h1">인력 DB 게시판</h1>
+          <div class="sub">공지/게시글을 모아 보여줍니다. 작성/수정/삭제는 관리자만 가능합니다.</div>
+        </div>
+      </div>
+
+      <div id="boardList" class="muted">로딩중…</div>
+
+      <div id="adminComposer" style="display:none; margin-top:14px;">
+        <div class="h1" style="font-size:16px;">관리자 작성</div>
+        <input id="postTitle" placeholder="제목" style="width:100%; margin-top:10px; border:1px solid rgba(11,18,32,.14); border-radius:12px; padding:10px 12px; font-size:14px;" />
+        <textarea id="postBody" rows="5" placeholder="내용" style="width:100%; margin-top:10px; border:1px solid rgba(11,18,32,.14); border-radius:12px; padding:10px 12px; font-size:14px;"></textarea>
+        <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+          <button class="btn blue" id="btnCreatePost" type="button">게시</button>
+          <span class="muted" id="postStatus"></span>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+    <div id="site-footer"></div>
+  </div>
+</body>
+</html>

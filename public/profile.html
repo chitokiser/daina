@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Daina · 인력 상세</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="./assets/images/dainalogo64x64.png" />
+  <link rel="apple-touch-icon" href="./assets/images/dainalogo64x64.png" />
+  <link rel="stylesheet" href="./assets/css/app.css" />
+  
+  <script defer src="./assets/js/partials.js"></script>
+  <script type="module" defer src="./assets/js/main.js"></script>
+  <script type="module" defer src="./assets/js/profilePage.js"></script>
+</head>
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+    <main class="main">
+      <div class="container">
+
+        <section class="panel">
+          <div class="hrow">
+            <div>
+              <h1 class="h1">인력 상세</h1>
+              <div class="sub" id="subMeta">로딩중…</div>
+            </div>
+            <a class="btn ghost" href="./db.html">목록</a>
+          </div>
+
+          <div id="denyBox" class="panel" style="display:none; margin-top:0; background:#fff7ed; border-color: rgba(245,158,11,.35);">
+            <div class="h1" style="font-size:16px;">접근 제한</div>
+            <div class="sub" style="margin-top:8px;">구직자는 다른 구직자의 상세 정보를 볼 수 없습니다.</div>
+          </div>
+
+          <div id="profileWrap" class="pwrap">
+            <div class="muted">로딩중…</div>
+          </div>
+
+          <div id="reqBox" style="display:none; margin-top:12px;">
+            <div class="h1" style="font-size:16px;">연락 요청 (구인자 전용)</div>
+            <div class="sub">연락처는 공개되지 않습니다. 요청이 등록되면 관리자가 contacts에서 확인 후 매칭합니다.</div>
+            <textarea id="reqMessage" rows="3" placeholder="요청 메시지" style="width:100%; margin-top:10px; border:1px solid rgba(11,18,32,.14); border-radius:12px; padding:10px 12px; font-size:14px;"></textarea>
+            <div style="display:flex; gap:10px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+              <button class="btn blue" id="btnReq" type="button">연락 요청 보내기</button>
+              <span class="muted" id="reqStatus"></span>
+            </div>
+          </div>
+
+        </section>
+      </div>
+    </main>
+
+<style>
+/* /public/profile.html inline style */
+.pwrap{ display:grid; grid-template-columns: 180px 1fr; gap: 14px; }
+.pimg{ width:180px; height:180px; border-radius: 16px; border:1px solid rgba(11,18,32,.10); object-fit:cover; background:#fff; }
+.kv{ border:1px solid rgba(11,18,32,.10); border-radius: 16px; padding: 12px; background:#fff; }
+.k{ font-size: 12px; color: rgba(11,18,32,.58); margin-bottom:6px; }
+.v{ font-size: 14px; color: rgba(11,18,32,.82); line-height:1.45; white-space:pre-wrap; }
+@media (max-width: 720px){
+  .pwrap{ grid-template-columns: 1fr; }
+  .pimg{ width:140px; height:140px; }
+}
+</style>
+
+    <div id="site-footer"></div>
+  </div>
+</body>
+</html>

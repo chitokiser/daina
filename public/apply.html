@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Daina · 일자리 신청</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="./assets/images/dainalogo64x64.png" />
+  <link rel="apple-touch-icon" href="./assets/images/dainalogo64x64.png" />
+  <link rel="stylesheet" href="./assets/css/app.css" />
+  
+  <script defer src="./assets/js/partials.js"></script>
+  <script type="module" defer src="./assets/js/main.js"></script>
+  <script type="module" defer src="./assets/js/applyPage.js"></script>
+</head>
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+    <main class="main">
+      <div class="container">
+
+        <section class="panel">
+          <div class="hrow slim">
+            <div>
+              <h1 class="h1">일자리 신청</h1>
+              <div class="sub">제출은 구글 로그인 후 가능합니다. 구인 데이터는 관리자만 열람합니다.</div>
+            </div>
+            <a class="btn ghost" href="./db.html">인력 DB</a>
+          </div>
+
+          <div class="tabs">
+            <button class="tab on" data-tab="jobseeker" type="button">구직 신청</button>
+            <button class="tab" data-tab="employer" type="button">구인 신청</button>
+          </div>
+
+          <div id="tab_jobseeker" class="tabpane">
+            <div class="formgrid">
+              <label class="fld">
+                <div class="lab">유저ID</div>
+                <input id="jsUserId" placeholder="예: vt_0001 (비워도 됨)" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">분류</div>
+                <select id="jsCategory"></select>
+              </label>
+
+              <label class="fld">
+                <div class="lab">이름</div>
+                <input id="jsName" placeholder="예: Nguyễn Văn An" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">사진 URL</div>
+                <input id="jsPhotoUrl" placeholder="/assets/images/jobseeker/1.png" />
+              </label>
+
+              <label class="fld full">
+                <div class="lab">프로필</div>
+                <textarea id="jsProfile" rows="3" placeholder="경력/학력/가능업무 상세"></textarea>
+              </label>
+
+              <label class="fld full">
+                <div class="lab">특기</div>
+                <input id="jsSkills" placeholder="예: 용접, 전기" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">근무상태</div>
+                <select id="jsWorkStatus">
+                  <option value="available">가능</option>
+                  <option value="working">근무중</option>
+                  <option value="leave">휴직</option>
+                  <option value="unknown">미정</option>
+                </select>
+              </label>
+
+              <label class="fld">
+                <div class="lab">근무 가능 거리</div>
+                <select id="jsWorkDistance">
+                  <option value="5">5km</option>
+                  <option value="10">10km</option>
+                  <option value="20">20km</option>
+                  <option value="50">50km</option>
+                  <option value="100">100km</option>
+                  <option value="9999">제한없음</option>
+                </select>
+              </label>
+
+              <div class="fld">
+                <div class="lab">현재 거주 지역</div>
+                <div class="row2">
+                  <select id="jsCurProvince"></select>
+                  <select id="jsCurCity"></select>
+                </div>
+                <input id="jsCurCityText" placeholder="도시 직접 입력 (선택)" style="margin-top:8px;" />
+                <button class="btn small ghost" id="btnPickCurGeo" type="button" style="margin-top:8px;">지도에서 선택</button>
+                <input id="jsCurLat" type="hidden" />
+                <input id="jsCurLng" type="hidden" />
+              </div>
+
+              <div class="fld">
+                <div class="lab">근무 가능 지역</div>
+                <div class="row2">
+                  <select id="jsWorkProvince"></select>
+                  <select id="jsWorkCity"></select>
+                </div>
+                <input id="jsWorkCityText" placeholder="도시 직접 입력 (선택)" style="margin-top:8px;" />
+                <button class="btn small ghost" id="btnPickWorkGeo" type="button" style="margin-top:8px;">지도에서 선택</button>
+                <input id="jsWorkLat" type="hidden" />
+                <input id="jsWorkLng" type="hidden" />
+              </div>
+
+              <label class="fld">
+                <div class="lab">전화번호</div>
+                <input id="jsPhone" placeholder="예: 090-123-4567" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">이메일</div>
+                <input id="jsEmail" placeholder="예: test@example.com" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">Zalo ID</div>
+                <input id="jsZalo" placeholder="예: zalo123" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">SNS(선택)</div>
+                <input id="jsSNS" placeholder="카카오/텔레그램 등" />
+              </label>
+
+              <div class="fld full" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button class="btn blue" id="btnSubmitJobseeker" type="button">구직 신청 제출</button>
+                <span class="muted" id="jsStatus"></span>
+              </div>
+            </div>
+          </div>
+
+          <div id="tab_employer" class="tabpane" style="display:none;">
+            <div class="formgrid">
+              <label class="fld">
+                <div class="lab">구인자 ID</div>
+                <input id="emEmployerId" placeholder="예: emp_0001 (비워도 됨)" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">구인 분류</div>
+                <select id="emCategory"></select>
+              </label>
+
+              <label class="fld">
+                <div class="lab">회사명</div>
+                <input id="emCompanyName" placeholder="회사 이름" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">담당자명</div>
+                <input id="emManagerName" placeholder="담당자 이름" />
+              </label>
+
+              <label class="fld full">
+                <div class="lab">요구사항</div>
+                <textarea id="emRequirements" rows="3" placeholder="근무 형태/업무 내용/조건"></textarea>
+              </label>
+
+              <label class="fld full">
+                <div class="lab">특기 요구사항</div>
+                <input id="emSkillRequirements" placeholder="예: 용접 가능, 전기 자격" />
+              </label>
+
+              <div class="fld">
+                <div class="lab">근무 지역</div>
+                <div class="row2">
+                  <select id="emWorkProvince"></select>
+                  <select id="emWorkCity"></select>
+                </div>
+                <input id="emWorkCityText" placeholder="도시 직접 입력 (선택)" style="margin-top:8px;" />
+                <button class="btn small ghost" id="btnPickEmWorkGeo" type="button" style="margin-top:8px;">지도에서 선택</button>
+                <input id="emWorkLat" type="hidden" />
+                <input id="emWorkLng" type="hidden" />
+              </div>
+
+              <div class="fld">
+                <div class="lab">현재 지역(선택)</div>
+                <div class="row2">
+                  <select id="emCurProvince"></select>
+                  <select id="emCurCity"></select>
+                </div>
+                <input id="emCurCityText" placeholder="도시 직접 입력 (선택)" style="margin-top:8px;" />
+              </div>
+
+              <label class="fld">
+                <div class="lab">연락처(전화)</div>
+                <input id="emPhone" placeholder="예: 090-123-4567" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">이메일</div>
+                <input id="emEmail" placeholder="예: hr@company.com" />
+              </label>
+
+              <label class="fld">
+                <div class="lab">SNS(선택)</div>
+                <input id="emSNS" placeholder="Zalo/카카오/텔레그램" />
+              </label>
+
+              <div class="fld full" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                <button class="btn blue" id="btnSubmitEmployer" type="button">구인 신청 제출</button>
+                <span class="muted" id="emStatus"></span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+<div id="mapModal" class="modal" style="display:none;">
+  <div class="modal-back" id="mapBack"></div>
+  <div class="modal-box">
+    <div class="hrow slim" style="margin:0 0 10px;">
+      <div>
+        <div class="h1" style="font-size:16px; margin:0;">지도에서 좌표 선택</div>
+        <div class="sub" style="margin-top:6px;">지도 클릭 → 좌표 저장</div>
+      </div>
+      <button class="btn small ghost" id="btnCloseMap" type="button">닫기</button>
+    </div>
+    <div id="map" style="height: 360px; border-radius: 14px; overflow:hidden; border:1px solid rgba(11,18,32,.12);"></div>
+    <div class="sub" id="mapHint" style="margin-top:10px;">선택 좌표: -</div>
+    <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+      <button class="btn blue" id="btnSaveMap" type="button">이 좌표 저장</button>
+      <span class="muted" id="mapStatus"></span>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+/* /public/apply.html inline style */
+.tabs{ display:flex; gap:10px; flex-wrap:wrap; margin-top: 10px; }
+.tab{
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(11,18,32,.14);
+  background:#fff;
+  cursor:pointer;
+}
+.tab.on{ background: rgba(37,99,235,.12); border-color: rgba(37,99,235,.25); }
+
+.formgrid{
+  margin-top: 14px;
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.fld .lab{ font-size: 12px; color: rgba(11,18,32,.62); margin-bottom:6px; }
+.fld input, .fld select, .fld textarea{
+  width:100%;
+  border:1px solid rgba(11,18,32,.14);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  outline:none;
+  background:#fff;
+}
+.fld textarea{ resize: vertical; }
+.fld.full{ grid-column: 1 / -1; }
+.row2{ display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.modal{
+  position:fixed; inset:0; z-index:50;
+  display:flex; align-items:center; justify-content:center;
+}
+.modal-back{ position:absolute; inset:0; background: rgba(0,0,0,.35); }
+.modal-box{
+  position:relative;
+  width:min(860px, calc(100% - 28px));
+  background:#fff;
+  border-radius: 18px;
+  padding: 14px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.25);
+}
+@media (max-width: 820px){
+  .formgrid{ grid-template-columns: 1fr; }
+}
+</style>
+
+    <div id="site-footer"></div>
+  </div>
+</body>
+</html>

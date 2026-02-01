@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Daina</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="./assets/images/dainalogo64x64.png" />
+  <link rel="apple-touch-icon" href="./assets/images/dainalogo64x64.png" />
+  <link rel="stylesheet" href="./assets/css/app.css" />
+  
+  <script defer src="./assets/js/partials.js"></script>
+  <script type="module" defer src="./assets/js/main.js"></script>
+  <script type="module" defer src="./assets/js/indexPage.js"></script>
+</head>
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+<main class="main">
+  <div class="container">
+
+    <section class="panel">
+      <div class="hrow">
+        <div>
+          <h1 class="h1">공지사항</h1>
+          <div class="sub">최근 공지 10개</div>
+        </div>
+      </div>
+      <ol class="notice-list" id="noticeList">
+        <li class="muted">로딩중…</li>
+      </ol>
+    </section>
+
+    <section class="panel">
+      <div class="hrow slim">
+        <div>
+          <h1 class="h1">인력 Top100</h1>
+          <div class="sub">평가(rating) 기준 상위 100명</div>
+        </div>
+        <a class="btn ghost" href="./db.html">인력 DB</a>
+      </div>
+
+      <div class="grid3" id="topCards">
+        <div class="muted">로딩중…</div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+    <div id="site-footer"></div>
+  </div>
+</body>
+</html>

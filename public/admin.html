@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Daina · 관리자</title>
+  <link rel="icon" type="image/png" sizes="64x64" href="./assets/images/dainalogo64x64.png" />
+  <link rel="apple-touch-icon" href="./assets/images/dainalogo64x64.png" />
+  <link rel="stylesheet" href="./assets/css/app.css" />
+  
+  <script defer src="./assets/js/partials.js"></script>
+  <script type="module" defer src="./assets/js/main.js"></script>
+  <script type="module" defer src="./assets/js/adminPage.js"></script>
+</head>
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+<main class="main">
+  <div class="container">
+
+    <section class="panel">
+      <div class="hrow">
+        <div>
+          <h1 class="h1">관리자 모드</h1>
+          <div class="sub">구직 승인, 연락 요청 매칭 처리</div>
+        </div>
+        <a class="btn ghost" href="./db.html">인력 DB</a>
+      </div>
+
+      <div id="adminGuard" class="muted">로딩중…</div>
+    </section>
+
+    <section class="panel">
+      <div class="hrow slim">
+        <div>
+          <h1 class="h1">구직 신청 승인</h1>
+          <div class="sub">승인 시 users(공개) + contacts(비공개)로 반영</div>
+        </div>
+      </div>
+      <div id="pendingJobseekers" class="muted">로딩중…</div>
+    </section>
+
+    <section class="panel">
+      <div class="hrow slim">
+        <div>
+          <h1 class="h1">연락 요청 (매칭)</h1>
+          <div class="sub">구인자 요청을 보고 contacts를 확인한 뒤 매칭 완료 처리</div>
+        </div>
+      </div>
+      <div id="reqList" class="muted">로딩중…</div>
+    </section>
+
+  </div>
+</main>
+
+    <div id="site-footer"></div>
+  </div>
+</body>
+</html>

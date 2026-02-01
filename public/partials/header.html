@@ -1,0 +1,63 @@
+<!-- /public/partials/header.html -->
+<header class="sitehdr">
+  <div class="hdrin">
+    <a class="brand" href="./index.html" aria-label="Daina 홈">
+      <img class="logo" src="./assets/images/daina.png" alt="Daina" />
+      <span class="brandtxt"></span>
+    </a>
+
+    <nav class="nav" aria-label="primary">
+      <a href="./db.html">인력 DB</a>
+      <a href="./training.html">기업능률교육</a>
+      <a href="./board.html">게시판</a>
+      <a href="./admin.html" class="adminOnly" style="display:none;">관리자</a>
+    </nav>
+
+    <div class="act">
+      <span class="pill" id="roleBadge">role: -</span>
+      <button class="btn small ghost" id="btnLogin" type="button">구글로그인</button>
+      <button class="btn small" id="btnLogout" type="button" style="display:none;">로그아웃</button>
+    </div>
+  </div>
+
+  <div class="hdrsub">
+    <a class="pill" href="./db.html?cat=domestic_tech">베트남기술직</a>
+    <a class="pill" href="./db.html?cat=domestic_student">베트남단순생산직</a>
+    <a class="pill" href="./db.html?cat=domestic_service">베트남서비스직</a>
+    <a class="pill" href="./db.html?cat=vn_housekeeping">베트남가사도우미</a>
+    <a class="pill" href="./db.html?cat=vn_vehicle">베트남지입차량</a>
+    <a class="pill" href="./db.html?cat=korean_expat">한국기술직</a>
+    <a class="pill" href="./db.html?cat=seasonal_worker">한국계절근로자</a>
+    <a class="pill" href="./db.html?cat=koreaservice">한국서비스직</a>
+  </div>
+</header>
+
+<style>
+/* /public/partials/header.html inline style */
+.sitehdr{
+  position:sticky; top:0; z-index:30;
+  backdrop-filter: blur(10px);
+  background: rgba(246,247,251,.86);
+  border-bottom: 1px solid rgba(11,18,32,.10);
+}
+.hdrin{
+  max-width:1100px; margin:0 auto;
+  padding: 10px 14px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; }
+.logo{ width:80px; height:27px; border-radius: 10px; border:1px solid rgba(11,18,32,.10); background:#fff; }
+.brandtxt{ font-size: 16px; letter-spacing:-0.2px; }
+.nav{ display:flex; gap: 14px; flex-wrap:wrap; }
+.nav a{ text-decoration:none; color: rgba(11,18,32,.78); font-size: 13px; }
+.nav a:hover{ color: rgba(11,18,32,1); }
+.act{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.hdrsub{
+  max-width:1100px; margin:0 auto;
+  padding: 0 14px 10px;
+  display:flex; gap:8px; flex-wrap:wrap;
+}
+@media (max-width: 680px){
+  .nav{ display:none; }
+}
+</style>
