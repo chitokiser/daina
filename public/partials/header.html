@@ -1,63 +1,238 @@
-<!-- /public/partials/header.html -->
-<header class="sitehdr">
-  <div class="hdrin">
-    <a class="brand" href="./index.html" aria-label="Daina 홈">
-      <img class="logo" src="./assets/images/daina.png" alt="Daina" />
-      <span class="brandtxt"></span>
+<!-- /public/partials/head.html -->
+<header class="top-header" id="siteHeaderRoot">
+  <div class="hdr-inner">
+    <a class="brand" href="index.html" aria-label="홈">
+      <img class="brand-logo" src="assets/images/daina.png" alt="Daina" />
+      <span class="brand-name"></span>
     </a>
 
-    <nav class="nav" aria-label="primary">
-      <a href="./db.html">인력 DB</a>
-      <a href="./training.html">기업능률교육</a>
-      <a href="./board.html">게시판</a>
-      <a href="./admin.html" class="adminOnly" style="display:none;">관리자</a>
+    <nav class="nav desktop-nav" aria-label="primary">
+      <a class="nav-link" href="db.html">인력 DB</a>
+      <a class="nav-link" href="apply.html">일자리 신청</a>
+      <a class="nav-link" href="mypage.html">마이페이지</a>
+      <a class="nav-link" href="admin.html" id="adminLink" style="display:none;">관리자</a>
     </nav>
 
-    <div class="act">
-      <span class="pill" id="roleBadge">role: -</span>
-      <button class="btn small ghost" id="btnLogin" type="button">구글로그인</button>
-      <button class="btn small" id="btnLogout" type="button" style="display:none;">로그아웃</button>
-    </div>
-  </div>
+    <div class="hdr-right" id="hdrRight">
+      <span class="net-badge" id="netBadge">-</span>
+      <span class="role-badge" id="roleBadge" style="display:none;">role: -</span>
 
-  <div class="hdrsub">
-    <a class="pill" href="./db.html?cat=domestic_tech">베트남기술직</a>
-    <a class="pill" href="./db.html?cat=domestic_student">베트남단순생산직</a>
-    <a class="pill" href="./db.html?cat=domestic_service">베트남서비스직</a>
-    <a class="pill" href="./db.html?cat=vn_housekeeping">베트남가사도우미</a>
-    <a class="pill" href="./db.html?cat=vn_vehicle">베트남지입차량</a>
-    <a class="pill" href="./db.html?cat=korean_expat">한국기술직</a>
-    <a class="pill" href="./db.html?cat=seasonal_worker">한국계절근로자</a>
-    <a class="pill" href="./db.html?cat=koreaservice">한국서비스직</a>
+      <button class="btn" id="btnLogin" type="button">로그인</button>
+
+      <button class="hamburger" id="btnMenu" type="button"
+        aria-label="메뉴"
+        aria-haspopup="menu"
+        aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="menu-pop" id="menuPop" role="menu" aria-label="모바일 메뉴" hidden>
+        <a role="menuitem" href="db.html">인력 DB</a>
+        <a role="menuitem" href="apply.html">일자리 신청</a>
+        <a role="menuitem" href="mypage.html">마이페이지</a>
+        <a role="menuitem" href="admin.html" id="adminLinkMobile" style="display:none;">관리자</a>
+        <div class="sep"></div>
+        <button class="btn pop-login" id="btnLoginMobile" type="button">로그인</button>
+      </div>
+    </div>
   </div>
 </header>
 
 <style>
-/* /public/partials/header.html inline style */
-.sitehdr{
-  position:sticky; top:0; z-index:30;
-  backdrop-filter: blur(10px);
-  background: rgba(246,247,251,.86);
-  border-bottom: 1px solid rgba(11,18,32,.10);
+  .top-header{
+    position:sticky;
+    top:0;
+    z-index:80;
+    background:#fff;
+    border-bottom:1px solid rgba(11,18,32,.10);
+  }
+
+  .hdr-inner{
+    max-width:1120px;
+    margin:0 auto;
+    padding:10px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    text-decoration:none;
+    color:inherit;
+    min-width:120px;
+  }
+  .brand-logo{
+    width:80px;
+    height:24px;
+    border-radius:10px;
+    object-fit:cover;
+  }
+  .brand-name{
+    font-size:15px;
+    letter-spacing:-0.2px;
+    font-weight:800;
+  }
+
+  .nav{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .nav-link{
+    text-decoration:none;
+    font-size:13px;
+    color:rgba(11,18,32,.86);
+    padding:8px 10px;
+    border-radius:12px;
+    border:1px solid transparent;
+  }
+  .nav-link:hover{
+    background:rgba(11,18,32,.04);
+    border-color:rgba(11,18,32,.08);
+  }
+
+  .hdr-right{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+
+  .net-badge{
+    font-size:12px;
+    color:rgba(11,18,32,.65);
+    border:1px solid rgba(11,18,32,.12);
+    padding:6px 10px;
+    border-radius:999px;
+  }
+
+  .role-badge{
+    font-size:12px;
+    color:rgba(11,18,32,.65);
+    border:1px solid rgba(11,18,32,.12);
+    padding:6px 10px;
+    border-radius:999px;
+    background:rgba(11,18,32,.03);
+  }
+
+  .btn{
+    border:1px solid rgba(11,18,32,.14);
+    background:#fff;
+    border-radius:12px;
+    padding:9px 12px;
+    font-size:13px;
+    cursor:pointer;
+  }
+
+  .hamburger{
+    display:none;
+    width:42px;
+    height:38px;
+    border-radius:12px;
+    border:1px solid rgba(11,18,32,.14);
+    background:#fff;
+    cursor:pointer;
+    padding:8px 10px;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    flex-direction:column;
+  }
+  .hamburger span{
+    display:block;
+    width:18px;
+    height:2px;
+    background:rgba(11,18,32,.86);
+    border-radius:999px;
+  }
+
+  .menu-pop{
+    position:absolute;
+    top:calc(100% + 8px);
+    right:0;
+    width:min(78vw, 260px);
+    background:#fff;
+    border:1px solid rgba(11,18,32,.12);
+    border-radius:16px;
+    box-shadow:0 18px 60px rgba(11,18,32,.18);
+    padding:8px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+
+  .menu-pop[hidden]{ display:none !important; }
+
+  .menu-pop a{
+    display:block;
+    padding:12px 12px;
+    border-radius:14px;
+    text-decoration:none;
+    color:rgba(11,18,32,.90);
+    font-size:14px;
+    border:1px solid rgba(11,18,32,.10);
+    background:rgba(11,18,32,.02);
+  }
+
+  .menu-pop .sep{
+    height:1px;
+    background:rgba(11,18,32,.10);
+    margin:4px 2px;
+  }
+
+  .pop-login{ width:100%; padding:11px 12px; border-radius:14px; }
+
+  @media (max-width: 860px){
+    .desktop-nav{ display:none; }
+    .hamburger{ display:flex; }
+    .brand-name{ display:none; }
+    .hdr-inner{ padding:10px 10px; }
+    .net-badge{ max-width:44vw; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  }
+  /* /public/partials/head.html 내부 style에 추가 */
+.menu-pop .pop-login{
+  color: rgba(11,18,32,.92) !important;
+  background:#fff !important;
+  border:1px solid rgba(11,18,32,.14) !important;
+  font-weight:700;
 }
-.hdrin{
-  max-width:1100px; margin:0 auto;
-  padding: 10px 14px;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
+/* /public/partials/head.html */
+
+/* 데스크탑(861px 이상): 상단 네비는 무조건 보이게 */
+@media (min-width: 861px){
+  .desktop-nav{ display:flex !important; }
+  .hamburger{ display:none !important; }
+  #menuPop{ display:none !important; } /* 혹시 열린 채로 남아도 데스크탑에서 숨김 */
 }
-.brand{ display:flex; align-items:center; gap:10px; text-decoration:none; }
-.logo{ width:80px; height:27px; border-radius: 10px; border:1px solid rgba(11,18,32,.10); background:#fff; }
-.brandtxt{ font-size: 16px; letter-spacing:-0.2px; }
-.nav{ display:flex; gap: 14px; flex-wrap:wrap; }
-.nav a{ text-decoration:none; color: rgba(11,18,32,.78); font-size: 13px; }
-.nav a:hover{ color: rgba(11,18,32,1); }
-.act{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-.hdrsub{
-  max-width:1100px; margin:0 auto;
-  padding: 0 14px 10px;
-  display:flex; gap:8px; flex-wrap:wrap;
+
+/* 모바일(860px 이하): 햄버거만 보이게 */
+@media (max-width: 860px){
+  .desktop-nav{ display:none !important; }
+  .hamburger{ display:flex !important; }
 }
-@media (max-width: 680px){
-  .nav{ display:none; }
+/* ===== 로그인 버튼 강제 표시 ===== */
+
+/* 데스크탑: 로그인 버튼 반드시 표시 */
+@media (min-width: 861px){
+  #btnLogin{
+    display:inline-flex !important;
+    align-items:center;
+    justify-content:center;
+    color: rgba(11,18,32,.92) !important;
+    background:#fff !important;
+  }
 }
+
+/* 모바일: 헤더 쪽 로그인 버튼 숨기고, 햄버거 메뉴 안 버튼 사용 */
+@media (max-width: 860px){
+  #btnLogin{
+    display:none !important;
+  }
+}
+
+
 </style>

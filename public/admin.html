@@ -1,3 +1,4 @@
+<!-- /public/admin.html -->
 <!doctype html>
 <html lang="ko">
 <head>
@@ -5,54 +6,131 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#f6f7fb" />
   <title>Daina · 관리자</title>
+
   <link rel="icon" type="image/png" sizes="64x64" href="./assets/images/dainalogo64x64.png" />
   <link rel="apple-touch-icon" href="./assets/images/dainalogo64x64.png" />
   <link rel="stylesheet" href="./assets/css/app.css" />
-  
+
   <script defer src="./assets/js/partials.js"></script>
   <script type="module" defer src="./assets/js/main.js"></script>
   <script type="module" defer src="./assets/js/adminPage.js"></script>
+
+  <style>
+    /* page layout */
+    .container{ max-width: 1120px; margin: 0 auto; padding: 18px 14px 36px; }
+    .panel{ background:#fff; border:1px solid rgba(11,18,32,.10); border-radius:16px; box-shadow: 0 10px 30px rgba(11,18,32,.05); padding:14px; margin-bottom:14px; }
+    .hrow{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .h1{ margin:0; font-size:20px; letter-spacing:-0.2px; }
+    .sub{ color: rgba(11,18,32,.62); font-size:13px; line-height:1.45; margin-top:6px; }
+    .tools{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .btn{ border:1px solid rgba(11,18,32,.14); background:#fff; border-radius:12px; padding:9px 12px; font-size:13px; cursor:pointer; }
+    .btn.blue{ background:#1f6feb; border-color:#1f6feb; color:#fff; }
+    .btn.ghost{ background:transparent; }
+    .badge{ display:inline-flex; align-items:center; gap:6px; border:1px solid rgba(11,18,32,.14); border-radius:999px; padding:6px 10px; font-size:12px; color: rgba(11,18,32,.70); }
+    .badge.ok{ border-color: rgba(16,185,129,.45); color: rgba(5,120,87,.95); background: rgba(16,185,129,.08); }
+    .badge.no{ border-color: rgba(239,68,68,.35); color: rgba(153,27,27,.95); background: rgba(239,68,68,.08); }
+
+    /* list */
+    .list{ display:flex; flex-direction:column; gap:10px; }
+    .item{ border:1px solid rgba(11,18,32,.10); border-radius:14px; padding:12px; display:flex; gap:12px; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; }
+    .left{ min-width: 260px; }
+    .title{ font-size:15px; margin:0; letter-spacing:-0.1px; }
+    .meta{ margin-top:6px; display:flex; flex-wrap:wrap; gap:8px; color: rgba(11,18,32,.62); font-size:12px; }
+    .desc{ margin-top:8px; color: rgba(11,18,32,.80); font-size:13px; line-height:1.45; white-space:pre-wrap; }
+    .right{ display:flex; gap:8px; align-items:center; justify-content:flex-end; flex-wrap:wrap; }
+    .pill{ display:inline-flex; align-items:center; border:1px solid rgba(11,18,32,.12); border-radius:999px; padding:5px 9px; font-size:12px; color: rgba(11,18,32,.70); background: rgba(11,18,32,.03); }
+    .link{ color:#1f6feb; text-decoration:none; font-size:12px; }
+    .muted{ color: rgba(11,18,32,.52); font-size:13px; }
+    .split{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between; }
+    .seg{ display:flex; gap:8px; flex-wrap:wrap; }
+    select, input{
+      border:1px solid rgba(11,18,32,.14);
+      border-radius:12px;
+      padding:9px 11px;
+      font-size:13px;
+      outline:none;
+      background:#fff;
+    }
+
+    @media (max-width: 720px){
+      .right{ justify-content:flex-start; }
+      .left{ min-width: 100%; }
+    }
+  </style>
 </head>
+
 <body>
   <div class="page">
     <div id="site-header"></div>
-<main class="main">
-  <div class="container">
 
-    <section class="panel">
-      <div class="hrow">
-        <div>
-          <h1 class="h1">관리자 모드</h1>
-          <div class="sub">구직 승인, 연락 요청 매칭 처리</div>
-        </div>
-        <a class="btn ghost" href="./db.html">인력 DB</a>
+    <main class="main">
+      <div class="container">
+
+        <section class="panel">
+          <div class="hrow">
+            <div>
+              <h1 class="h1">관리자 모드</h1>
+              <div class="sub">
+                구직 신청 승인, 연락 요청 확인, 데이터 수정/삭제 작업을 진행합니다.
+              </div>
+            </div>
+
+            <div class="tools">
+              <span class="badge" id="adminBadge">권한 확인중…</span>
+              <button class="btn blue" id="btnRefresh" type="button">새로고침</button>
+              <a class="btn" href="./db.html">인력 DB</a>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="split">
+            <div>
+              <div class="pill">구직 신청 승인</div>
+              <div class="sub" id="applyMeta">로딩중…</div>
+            </div>
+            <div class="seg">
+              <select id="applyFilter">
+                <option value="pending">대기</option>
+                <option value="approved">승인</option>
+                <option value="all">전체</option>
+              </select>
+              <input id="applyQuery" placeholder="이름 / 이메일 / 전화" />
+              <button class="btn" id="btnApplySearch" type="button">검색</button>
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="list" id="applyList">
+            <div class="muted">로딩중…</div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="split">
+            <div>
+              <div class="pill">연락 요청 (매칭)</div>
+              <div class="sub" id="contactMeta">로딩중…</div>
+            </div>
+            <div class="seg">
+              <select id="contactFilter">
+                <option value="open">미처리</option>
+                <option value="done">처리완료</option>
+                <option value="all">전체</option>
+              </select>
+              <input id="contactQuery" placeholder="이름 / 메시지 / 이메일 / 전화" />
+              <button class="btn" id="btnContactSearch" type="button">검색</button>
+            </div>
+          </div>
+
+          <div style="height:10px"></div>
+          <div class="list" id="contactList">
+            <div class="muted">로딩중…</div>
+          </div>
+        </section>
+
       </div>
-
-      <div id="adminGuard" class="muted">로딩중…</div>
-    </section>
-
-    <section class="panel">
-      <div class="hrow slim">
-        <div>
-          <h1 class="h1">구직 신청 승인</h1>
-          <div class="sub">승인 시 users(공개) + contacts(비공개)로 반영</div>
-        </div>
-      </div>
-      <div id="pendingJobseekers" class="muted">로딩중…</div>
-    </section>
-
-    <section class="panel">
-      <div class="hrow slim">
-        <div>
-          <h1 class="h1">연락 요청 (매칭)</h1>
-          <div class="sub">구인자 요청을 보고 contacts를 확인한 뒤 매칭 완료 처리</div>
-        </div>
-      </div>
-      <div id="reqList" class="muted">로딩중…</div>
-    </section>
-
-  </div>
-</main>
+    </main>
 
     <div id="site-footer"></div>
   </div>

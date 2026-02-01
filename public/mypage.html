@@ -1,0 +1,126 @@
+<!-- /public/mypage.html -->
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#f6f7fb" />
+  <title>Daina · 마이페이지</title>
+
+  <link rel="icon" type="image/png" sizes="64x64" href="./assets/images/dainalogo64x64.png" />
+  <link rel="apple-touch-icon" href="./assets/images/dainalogo64x64.png" />
+  <link rel="stylesheet" href="./assets/css/app.css" />
+
+  <script defer src="./assets/js/partials.js"></script>
+  <script type="module" defer src="./assets/js/main.js"></script>
+  <script type="module" defer src="./assets/js/mypagePage.js"></script>
+
+  <style>
+    .container{ max-width: 860px; margin:0 auto; padding: 16px 14px 42px; }
+    .panel{ background:#fff; border:1px solid rgba(11,18,32,.10); border-radius:16px; box-shadow: 0 10px 30px rgba(11,18,32,.05); padding:14px; }
+    .h1{ margin:0; font-size:20px; letter-spacing:-0.2px; }
+    .sub{ color: rgba(11,18,32,.62); font-size:13px; line-height:1.45; margin-top:6px; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px; }
+    .field label{ display:block; font-size:12px; color:rgba(11,18,32,.62); margin: 2px 0 6px; }
+    .field input, .field select, .field textarea{
+      width:100%;
+      border:1px solid rgba(11,18,32,.14);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+    }
+    .field textarea{ min-height:96px; resize:vertical; }
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+    .btn{ border:1px solid rgba(11,18,32,.14); background:#fff; border-radius:12px; padding:10px 12px; font-size:13px; cursor:pointer; }
+    .btn.blue{ background:#1f6feb; border-color:#1f6feb; color:#fff; }
+    .pill{ display:inline-flex; align-items:center; border:1px solid rgba(11,18,32,.12); border-radius:999px; padding:6px 10px; font-size:12px; color:rgba(11,18,32,.72); background: rgba(11,18,32,.03); }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+
+    @media (max-width: 720px){
+      .grid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div id="site-header"></div>
+
+    <main class="main">
+      <div class="container">
+        <section class="panel">
+          <div class="row">
+            <div>
+              <h1 class="h1">마이페이지</h1>
+              <div class="sub">내 프로필을 수정할 수 있습니다. 저장하면 바로 반영됩니다.</div>
+            </div>
+            <span class="pill" id="meMeta">로그인 확인중…</span>
+          </div>
+
+          <div class="grid">
+            <div class="field">
+              <label>이름</label>
+              <input id="fName" placeholder="예: 홍길동" />
+            </div>
+
+            <div class="field">
+              <label>전화</label>
+              <input id="fPhone" placeholder="예: 010-1234-5678" />
+            </div>
+
+            <div class="field">
+              <label>카테고리</label>
+              <select id="fCategory">
+                <option value="">선택</option>
+                <option value="domestic_tech">베트남기술직</option>
+                <option value="domestic_student">베트남단순생산직</option>
+                <option value="domestic_service">베트남서비스직</option>
+                <option value="vn_housekeeping">베트남가사도우미</option>
+                <option value="vn_vehicle">베트남지입차량</option>
+                <option value="korean_expat">한국기술직</option>
+                <option value="seasonal_worker">한국계절근로자</option>
+                <option value="koreaservice">한국서비스직</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label>근무 상태</label>
+              <select id="fWorkStatus">
+                <option value="">선택</option>
+                <option value="available">가능</option>
+                <option value="working">근무중</option>
+                <option value="leave">휴직</option>
+                <option value="unknown">미정</option>
+              </select>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>특기 / 스킬</label>
+              <input id="fSkills" placeholder="예: 조리, 운전, 용접, 통역" />
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>소개 / 프로필</label>
+              <textarea id="fProfile" placeholder="간단 소개를 적어주세요"></textarea>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label>프로필 사진 URL (선택)</label>
+              <input id="fPhoto" placeholder="https://..." />
+              <div class="sub">승인된 프로필 사진만 공개 페이지에 노출되도록 규칙을 둘 수도 있습니다.</div>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button class="btn blue" id="btnSave" type="button">저장</button>
+            <button class="btn" id="btnReload" type="button">다시 불러오기</button>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <div id="site-footer"></div>
+  </div>
+</body>
+</html>

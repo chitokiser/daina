@@ -1,224 +1,447 @@
-/* /public/assets/js/adminPage.js */
+// /public/assets/js/adminPage.js
 import { db } from "./firebaseApp.js";
-import { getMyRole } from "./roles.js";
 import {
-  collection, query, orderBy, limit, getDocs, doc, setDoc, updateDoc, getDoc
+  getAuth,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  doc,
+  getDoc,
+  collection,
+  query,
+  limit,
+  getDocs,
+  updateDoc,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 function esc(s){
-  return String(s||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
 }
-function nowIso(){ return new Date().toISOString(); }
 
-async function guard(){
-  const guardEl = document.getElementById("adminGuard");
-  const role = await getMyRole().catch(()=>null);
-  if(role !== "admin"){
-    if(guardEl) guardEl.textContent = "관리자만 접근 가능합니다. 관리자 계정으로 로그인하세요.";
-    throw new Error("not admin");
+function setText(id, text){
+  const el = document.getElementById(id);
+  if(el) el.textContent = text ?? "";
+}
+
+function setBadge(ok, text){
+  const el = document.getElementById("adminBadge");
+  if(!el) return;
+  el.classList.remove("ok", "no");
+  el.classList.add(ok ? "ok" : "no");
+  el.textContent = text;
+}
+
+async function isAdmin(uid){
+  if(!uid) return false;
+  const ref = doc(db, "roles", uid);
+  const snap = await getDoc(ref);
+  return snap.exists() && snap.data()?.admin === true;
+}
+
+function normalizeStr(v){
+  return String(v ?? "").trim();
+}
+
+function includesQ(hay, q){
+  if(!q) return true;
+  return hay.toLowerCase().includes(q.toLowerCase());
+}
+
+function toMillis(v){
+  if(!v) return 0;
+
+  // Firestore Timestamp 타입 방어
+  if(typeof v === "object"){
+    if(typeof v.toMillis === "function") return v.toMillis();
+    if(typeof v.seconds === "number") return v.seconds * 1000;
   }
-  if(guardEl) guardEl.textContent = "관리자 인증 완료";
+
+  // ISO string, number 방어
+  if(typeof v === "number") return v;
+  const t = Date.parse(String(v));
+  return Number.isFinite(t) ? t : 0;
 }
 
-async function loadPendingJobseekers(){
-  const q = query(collection(db, "applications_jobseeker"), orderBy("createdAt","desc"), limit(100));
-  const snap = await getDocs(q);
-  const items=[];
-  snap.forEach(d=> items.push({ id: d.id, ...d.data() }));
-  return items.filter(x=> (x.status||"pending")==="pending");
+function fmtDate(v){
+  const t = toMillis(v);
+  if(!t) return "-";
+  const d = new Date(t);
+  const yy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,"0");
+  const dd = String(d.getDate()).padStart(2,"0");
+  const hh = String(d.getHours()).padStart(2,"0");
+  const mi = String(d.getMinutes()).padStart(2,"0");
+  return `${yy}-${mm}-${dd} ${hh}:${mi}`;
 }
 
-function renderPending(items){
-  const root = document.getElementById("pendingJobseekers");
-  if(!root) return;
-  if(!items.length){
-    root.innerHTML = "<div class='muted'>대기중 신청이 없습니다.</div>";
-    return;
-  }
-  root.innerHTML = items.map(x=>{
-    const name = esc(x.name||"-");
-    const cat = esc(x.category||"-");
-    const uid = esc(x.ownerEmail||x.ownerUid||"-");
-    const skills = esc(x.skills||"");
-    return `
-      <div class="panel" style="margin-top:10px; box-shadow:none;">
-        <div class="hrow slim" style="margin:0 0 10px;">
-          <div>
-            <div class="h1" style="font-size:16px; margin:0;">${name}</div>
-            <div class="sub">${cat} · ${uid}</div>
-          </div>
-          <button class="btn blue small" data-act="approve" data-id="${esc(x.id)}" type="button">승인</button>
-        </div>
-        <div class="muted" style="font-size:13px;">특기: ${skills}</div>
-      </div>
-    `;
-  }).join("");
+function renderEmpty(rootId, msg){
+  const root = document.getElementById(rootId);
+  if(root) root.innerHTML = `<div class="muted">${esc(msg || "결과가 없습니다.")}</div>`;
+}
 
-  root.querySelectorAll("button[data-act='approve']").forEach(btn=>{
+function attachActions(){
+  // 구직 승인
+  document.querySelectorAll("[data-act='approve-apply']").forEach((btn)=>{
     btn.addEventListener("click", async ()=>{
       const id = btn.getAttribute("data-id");
+      if(!id) return;
       btn.disabled = true;
       try{
-        await approveJobseeker(id);
-        alert("승인 완료");
-        location.reload();
+        await updateDoc(doc(db, "applications_jobseeker", id), {
+          status: "approved",
+          approvedAt: serverTimestamp()
+        });
       }catch(e){
         console.error(e);
-        alert("승인 실패: 콘솔 확인");
+        alert("승인 실패 (콘솔 확인)");
+      }finally{
         btn.disabled = false;
+        await loadAll();
+      }
+    });
+  });
+
+  // 구직 제외
+  document.querySelectorAll("[data-act='reject-apply']").forEach((btn)=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-id");
+      if(!id) return;
+      const ok = confirm("대기 목록에서 제외 처리할까요? (status=rejected)");
+      if(!ok) return;
+
+      btn.disabled = true;
+      try{
+        await updateDoc(doc(db, "applications_jobseeker", id), {
+          status: "rejected",
+          rejectedAt: serverTimestamp()
+        });
+      }catch(e){
+        console.error(e);
+        alert("처리 실패 (콘솔 확인)");
+      }finally{
+        btn.disabled = false;
+        await loadAll();
+      }
+    });
+  });
+
+  // 연락 요청 처리완료
+  document.querySelectorAll("[data-act='done-contact']").forEach((btn)=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-id");
+      if(!id) return;
+      btn.disabled = true;
+      try{
+        await updateDoc(doc(db, "contacts", id), {
+          status: "done",
+          doneAt: serverTimestamp()
+        });
+      }catch(e){
+        console.error(e);
+        alert("처리 실패 (콘솔 확인)");
+      }finally{
+        btn.disabled = false;
+        await loadAll();
+      }
+    });
+  });
+
+  // 연락 요청 다시 열기
+  document.querySelectorAll("[data-act='open-contact']").forEach((btn)=>{
+    btn.addEventListener("click", async ()=>{
+      const id = btn.getAttribute("data-id");
+      if(!id) return;
+      btn.disabled = true;
+      try{
+        await updateDoc(doc(db, "contacts", id), {
+          status: "open",
+          reopenedAt: serverTimestamp()
+        });
+      }catch(e){
+        console.error(e);
+        alert("처리 실패 (콘솔 확인)");
+      }finally{
+        btn.disabled = false;
+        await loadAll();
       }
     });
   });
 }
 
-async function approveJobseeker(appId){
-  const appRef = doc(db, "applications_jobseeker", appId);
-  const snap = await getDoc(appRef);
-  if(!snap.exists()) throw new Error("app missing");
-  const a = snap.data();
-
-  // userId: if provided use it else generate from category prefix
-  const prefixMap = {
-    domestic_tech: "vt",
-    domestic_student: "vs",
-    domestic_service: "vv",
-    korean_expat: "kt",
-    seasonal_worker: "kw",
-    koreaservice: "ks"
-  };
-  let userId = (a.userId || "").trim();
-  if(!userId){
-    const px = prefixMap[a.category] || "u";
-    userId = `${px}_${String(appId).slice(-4)}`;
-  }
-
-  const u = {
-    userId,
-    category: a.category || null,
-    name: a.name || null,
-    photo: a.photo || "/assets/images/jobseeker/1.png",
-    profile: a.profile || "",
-    skills: a.skills || "",
-    workStatus: a.workStatus || "available",
-    workDistanceKm: a.workDistanceKm ?? null,
-    currentRegion: a.currentRegion || null,
-    workRegion: a.workRegion || null,
-    currentGeo: a.currentGeo || null,
-    workGeo: a.workGeo || null,
-    rating: 0,
-    approved: true,
-    ownerUid: a.ownerUid || null,
-    createdAt: nowIso(),
-    updatedAt: nowIso()
-  };
-
-  const c = {
-    userId,
-    phone: a.contact?.phone || null,
-    email: a.contact?.email || null,
-    zalo: a.contact?.zalo || null,
-    sns: a.contact?.sns || null,
-    ownerUid: a.ownerUid || null,
-    createdAt: nowIso(),
-    updatedAt: nowIso()
-  };
-
-  await setDoc(doc(db, "users", userId), u, { merge: false });
-  await setDoc(doc(db, "contacts", userId), c, { merge: false });
-  await updateDoc(appRef, { status: "approved", approvedUserId: userId, updatedAt: nowIso() });
-}
-
-async function loadRequests(){
-  const q = query(collection(db, "contactRequests"), orderBy("createdAt","desc"), limit(200));
+async function fetchApplications(){
+  const ref = collection(db, "applications_jobseeker");
+  const q = query(ref, limit(500));
   const snap = await getDocs(q);
-  const items=[];
-  snap.forEach(d=> items.push({ id: d.id, ...d.data() }));
+
+  const items = [];
+  snap.forEach((d)=>{
+    items.push({ id: d.id, ...(d.data() || {}) });
+  });
+
+  // createdAt 후보들을 millis로 정렬
+  items.sort((a,b)=>{
+    const aa = a.createdAt ?? a.created_at ?? a.submittedAt ?? a.timestamp ?? a.createdAtTs ?? a.createdAtTS;
+    const bb = b.createdAt ?? b.created_at ?? b.submittedAt ?? b.timestamp ?? b.createdAtTs ?? b.createdAtTS;
+    return toMillis(bb) - toMillis(aa);
+  });
+
   return items;
 }
 
-async function getContact(userId){
-  const ref = doc(db, "contacts", userId);
-  const snap = await getDoc(ref);
-  return snap.exists() ? snap.data() : null;
+function mapApplyStatus(v){
+  const s = normalizeStr(v?.status);
+  if(s) return s;
+  if(v?.approved === true) return "approved";
+  return "pending";
 }
 
-async function markRequest(id, status){
-  await updateDoc(doc(db, "contactRequests", id), { status, updatedAt: nowIso(), decidedAt: nowIso() });
-}
-
-function renderRequests(items){
-  const root = document.getElementById("reqList");
+function renderApplications(all){
+  const root = document.getElementById("applyList");
   if(!root) return;
+
+  const filter = document.getElementById("applyFilter")?.value || "pending";
+  const q = normalizeStr(document.getElementById("applyQuery")?.value);
+
+  const items = all
+    .map((x)=> ({ ...x, _status: mapApplyStatus(x) }))
+    .filter((x)=>{
+      if(filter === "all") return true;
+      return x._status === filter;
+    })
+    .filter((x)=>{
+      if(!q) return true;
+      const hay = [
+        x.name, x.email, x.phone,
+        x.kakao, x.telegram, x.memo,
+        x.category, x.workStatus
+      ].filter(Boolean).join(" ");
+      return includesQ(hay, q);
+    });
+
+  setText("applyMeta", `총 ${items.length}건 (필터: ${filter})`);
+
   if(!items.length){
-    root.innerHTML = "<div class='muted'>요청이 없습니다.</div>";
+    renderEmpty("applyList", "구직 신청 데이터가 없습니다.");
     return;
   }
 
-  root.innerHTML = items.map(r=>{
-    const t = `대상: ${esc(r.userId||"-")} / 구인자: ${esc(r.employerEmail||r.employerUid||"-")}`;
-    const st = esc(r.status||"-");
-    const msg = esc(r.message||"(메시지 없음)");
+  root.innerHTML = items.map((x)=>{
+    const name = esc(x.name || "-");
+    const email = esc(x.email || "");
+    const phone = esc(x.phone || "");
+    const cat = esc(x.category || "");
+    const work = esc(x.workStatus || "");
+    const status = esc(x._status || "");
+    const createdAt = x.createdAt ?? x.created_at ?? x.submittedAt ?? x.timestamp ?? x.createdAtTs ?? x.createdAtTS;
+    const when = fmtDate(createdAt);
+    const msg = esc(x.memo || x.message || x.profile || "");
+
+    const canApprove = (x._status === "pending");
+    const canReject = (x._status === "pending");
+
     return `
-      <div class="panel" style="margin-top:10px; box-shadow:none;">
-        <div class="hrow slim" style="margin:0 0 10px;">
-          <div>
-            <div class="h1" style="font-size:16px; margin:0;">${t}</div>
-            <div class="sub">status: ${st}</div>
+      <div class="item">
+        <div class="left">
+          <p class="title">${name}</p>
+          <div class="meta">
+            <span class="pill">status: ${status || "pending"}</span>
+            ${cat ? `<span class="pill">${cat}</span>` : ``}
+            ${work ? `<span class="pill">${work}</span>` : ``}
+            <span class="pill">${esc(when)}</span>
           </div>
-          <a class="btn small ghost" href="./profile.html?id=${encodeURIComponent(r.userId||"")}">상세</a>
+          <div class="desc">${msg || `<span class="muted">메모/메시지 없음</span>`}</div>
+          <div class="meta">
+            ${email ? `<a class="link" href="mailto:${email}">${email}</a>` : `<span class="muted">email 없음</span>`}
+            ${phone ? `<a class="link" href="tel:${phone}">${phone}</a>` : ``}
+          </div>
         </div>
-        <div class="muted" style="font-size:13px; white-space:pre-wrap;">${msg}</div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; align-items:center;">
-          <button class="btn small ghost" data-act="show" data-id="${esc(r.id)}" data-user="${esc(r.userId||"")}">연락처 보기</button>
-          <button class="btn small blue" data-act="done" data-id="${esc(r.id)}">매칭완료</button>
-          <button class="btn small" data-act="reject" data-id="${esc(r.id)}">거절</button>
-          <span class="muted" data-out="${esc(r.id)}"></span>
+
+        <div class="right">
+          ${canApprove ? `<button class="btn blue" data-act="approve-apply" data-id="${esc(x.id)}" type="button">승인</button>` : ``}
+          ${canReject ? `<button class="btn" data-act="reject-apply" data-id="${esc(x.id)}" type="button">제외</button>` : ``}
+          <span class="pill">${esc(x.id)}</span>
         </div>
       </div>
     `;
   }).join("");
 
-  root.querySelectorAll("button[data-act]").forEach(btn=>{
-    btn.addEventListener("click", async ()=>{
-      const act = btn.getAttribute("data-act");
-      const id = btn.getAttribute("data-id");
-      const out = root.querySelector(`[data-out="${CSS.escape(id)}"]`);
-      btn.disabled = true;
-      try{
-        if(act==="show"){
-          const userId = btn.getAttribute("data-user");
-          if(out) out.textContent = "조회중…";
-          const c = await getContact(userId);
-          if(!c){ if(out) out.textContent = "연락처 없음"; return; }
-          if(out) out.textContent = `phone: ${c.phone||"-"} / email: ${c.email||"-"} / zalo: ${c.zalo||"-"}`;
-        }
-        if(act==="done"){
-          await markRequest(id, "done");
-          alert("매칭완료 처리했습니다.");
-          location.reload();
-        }
-        if(act==="reject"){
-          await markRequest(id, "rejected");
-          alert("거절 처리했습니다.");
-          location.reload();
-        }
-      }catch(e){
-        console.error(e);
-        alert("처리 실패: 콘솔 확인");
-      }finally{
-        btn.disabled = false;
-      }
+  attachActions();
+}
+
+async function fetchContacts(){
+  const ref = collection(db, "contacts");
+  const q = query(ref, limit(500));
+  const snap = await getDocs(q);
+
+  const items = [];
+  snap.forEach((d)=>{
+    items.push({ id: d.id, ...(d.data() || {}) });
+  });
+
+  items.sort((a,b)=>{
+    const aa = a.createdAt ?? a.created_at ?? a.sentAt ?? a.timestamp ?? a.createdAtTs ?? a.createdAtTS;
+    const bb = b.createdAt ?? b.created_at ?? b.sentAt ?? b.timestamp ?? b.createdAtTs ?? b.createdAtTS;
+    return toMillis(bb) - toMillis(aa);
+  });
+
+  return items;
+}
+
+function mapContactStatus(v){
+  const s = normalizeStr(v?.status);
+  if(s) return s;
+  if(v?.done === true) return "done";
+  return "open";
+}
+
+function renderContacts(all){
+  const root = document.getElementById("contactList");
+  if(!root) return;
+
+  const filter = document.getElementById("contactFilter")?.value || "open";
+  const q = normalizeStr(document.getElementById("contactQuery")?.value);
+
+  const items = all
+    .map((x)=> ({ ...x, _status: mapContactStatus(x) }))
+    .filter((x)=>{
+      if(filter === "all") return true;
+      return x._status === filter;
+    })
+    .filter((x)=>{
+      if(!q) return true;
+      const hay = [
+        x.name, x.email, x.phone,
+        x.message, x.memo, x.userId, x.targetUserId
+      ].filter(Boolean).join(" ");
+      return includesQ(hay, q);
     });
+
+  setText("contactMeta", `총 ${items.length}건 (필터: ${filter})`);
+
+  if(!items.length){
+    renderEmpty("contactList", "연락 요청 데이터가 없습니다.");
+    return;
+  }
+
+  root.innerHTML = items.map((x)=>{
+    const name = esc(x.name || x.fromName || "-");
+    const email = esc(x.email || x.fromEmail || "");
+    const phone = esc(x.phone || x.fromPhone || "");
+    const status = esc(x._status || "open");
+    const createdAt = x.createdAt ?? x.created_at ?? x.sentAt ?? x.timestamp ?? x.createdAtTs ?? x.createdAtTS;
+    const when = fmtDate(createdAt);
+    const msg = esc(x.message || x.memo || "");
+
+    const from = esc(x.userId || x.fromUserId || "");
+    const target = esc(x.targetUserId || x.toUserId || "");
+
+    const canDone = (x._status === "open");
+    const canOpen = (x._status === "done");
+
+    return `
+      <div class="item">
+        <div class="left">
+          <p class="title">${name}</p>
+          <div class="meta">
+            <span class="pill">status: ${status}</span>
+            <span class="pill">${esc(when)}</span>
+            ${from ? `<span class="pill">from: ${from}</span>` : ``}
+            ${target ? `<span class="pill">to: ${target}</span>` : ``}
+          </div>
+          <div class="desc">${msg || `<span class="muted">메시지 없음</span>`}</div>
+          <div class="meta">
+            ${email ? `<a class="link" href="mailto:${email}">${email}</a>` : `<span class="muted">email 없음</span>`}
+            ${phone ? `<a class="link" href="tel:${phone}">${phone}</a>` : ``}
+          </div>
+        </div>
+
+        <div class="right">
+          ${canDone ? `<button class="btn blue" data-act="done-contact" data-id="${esc(x.id)}" type="button">처리완료</button>` : ``}
+          ${canOpen ? `<button class="btn" data-act="open-contact" data-id="${esc(x.id)}" type="button">다시열기</button>` : ``}
+          <span class="pill">${esc(x.id)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  attachActions();
+}
+
+let _cacheApplies = [];
+let _cacheContacts = [];
+
+async function loadAll(){
+  try{
+    setText("applyMeta", "로딩중…");
+    setText("contactMeta", "로딩중…");
+
+    const [a, c] = await Promise.all([fetchApplications(), fetchContacts()]);
+    _cacheApplies = a;
+    _cacheContacts = c;
+
+    renderApplications(_cacheApplies);
+    renderContacts(_cacheContacts);
+  }catch(e){
+    console.error(e);
+    setText("applyMeta", "로드 실패 (콘솔 확인)");
+    setText("contactMeta", "로드 실패 (콘솔 확인)");
+    renderEmpty("applyList", "로드 실패");
+    renderEmpty("contactList", "로드 실패");
+  }
+}
+
+function bindUi(){
+  document.getElementById("btnRefresh")?.addEventListener("click", loadAll);
+
+  document.getElementById("btnApplySearch")?.addEventListener("click", ()=>renderApplications(_cacheApplies));
+  document.getElementById("applyFilter")?.addEventListener("change", ()=>renderApplications(_cacheApplies));
+  document.getElementById("applyQuery")?.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") renderApplications(_cacheApplies);
+  });
+
+  document.getElementById("btnContactSearch")?.addEventListener("click", ()=>renderContacts(_cacheContacts));
+  document.getElementById("contactFilter")?.addEventListener("change", ()=>renderContacts(_cacheContacts));
+  document.getElementById("contactQuery")?.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter") renderContacts(_cacheContacts);
   });
 }
 
-async function init(){
-  await guard();
-  const pend = await loadPendingJobseekers();
-  renderPending(pend);
+function boot(){
+  bindUi();
 
-  const req = await loadRequests();
-  renderRequests(req);
+  const auth = getAuth();
+  onAuthStateChanged(auth, async (user)=>{
+    if(!user){
+      setBadge(false, "로그인이 필요합니다.");
+      alert("로그인이 필요합니다.");
+      location.href = "./index.html";
+      return;
+    }
+
+    try{
+      const ok = await isAdmin(user.uid);
+      if(!ok){
+        setBadge(false, "관리자 권한 없음");
+        alert("관리자 권한이 없습니다.");
+        location.href = "./index.html";
+        return;
+      }
+      setBadge(true, "관리자 권한 확인됨");
+      await loadAll();
+    }catch(e){
+      console.error(e);
+      setBadge(false, "권한 확인 실패");
+      alert("권한 확인 실패 (콘솔 확인)");
+      location.href = "./index.html";
+    }
+  });
 }
 
-init().catch(e=>console.error(e));
+boot();
