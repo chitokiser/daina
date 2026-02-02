@@ -1,5 +1,5 @@
 // /public/assets/js/main.js
-import { wireHeaderAuthUi } from "./roles.js";
+import { wireHeaderAuthUi, initAuth } from "./roles.js";
 import { wireHeaderMenuUi } from "./headerMenu.js";
 
 function onReady(fn){
@@ -7,29 +7,37 @@ function onReady(fn){
   else fn();
 }
 
-onReady(()=>{
-  // header is injected asynchronously, so poll a bit
-  let tries = 0;
-  const t = setInterval(()=>{
-    tries++;
+onReady(async ()=>{
+  // redirect 결과는 헤더 주입과 무관하게 먼저 처리
+  await initAuth();
 
-    // 헤더가 주입되었는지 확인
-    const ok =
-      document.getElementById("btnLogin") &&
-      document.getElementById("roleBadge") &&
-      document.getElementById("btnMenu") &&
-      document.getElementById("menuPop");
+  // 1) 헤더가 이미 들어온 경우
+  if(document.getElementById("btnLogin")){
+    wireHeaderAuthUi();
+    wireHeaderMenuUi();
+    return;
+  }
 
-    if(ok){
-      clearInterval(t);
+  // 2) 헤더가 나중에 주입되는 경우: MutationObserver로 정확히 감지
+  const root = document.getElementById("site-header");
+  if(!root){
+    // 최후의 안전장치(루트가 없으면 그냥 폴링)
+    const t = setInterval(()=>{
+      if(document.getElementById("btnLogin")){
+        clearInterval(t);
+        wireHeaderAuthUi();
+        wireHeaderMenuUi();
+      }
+    }, 100);
+    return;
+  }
 
-      // 로그인/권한 UI
+  const obs = new MutationObserver(()=>{
+    if(document.getElementById("btnLogin")){
+      obs.disconnect();
       wireHeaderAuthUi();
-
-      // 햄버거 메뉴 UI
       wireHeaderMenuUi();
     }
-
-    if(tries > 60) clearInterval(t);
-  }, 100);
+  });
+  obs.observe(root, { childList:true, subtree:true });
 });

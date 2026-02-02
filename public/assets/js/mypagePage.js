@@ -1,108 +1,211 @@
 // /public/assets/js/mypagePage.js
-import { db } from "./firebaseApp.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { auth, db } from "./firebaseApp.js";
+import { fillProvinceSelect, PROVINCES } from "./regions.js";
+
+import {
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  limit,
+  getDocs,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 function $(id){ return document.getElementById(id); }
 
-function val(id){ return ($(id)?.value ?? "").trim(); }
-
-function setVal(id, v){
+function setText(id, t){
   const el = $(id);
-  if(el) el.value = v ?? "";
+  if(el) el.textContent = t ?? "";
 }
 
-function setMeta(text){
-  const el = $("meMeta");
-  if(el) el.textContent = text ?? "";
+function val(id){ return String($(id)?.value ?? "").trim(); }
+function setVal(id, v){ if($(id)) $(id).value = v ?? ""; }
+
+function provinceNameOf(code){
+  const p = PROVINCES.find(x => x.code === code);
+  return p ? p.name : "";
 }
 
-function pickProfile(data){
+function pickFirst(obj, keys){
+  for(const k of keys){
+    if(obj && obj[k] != null && String(obj[k]).trim() !== "") return obj[k];
+  }
+  return "";
+}
+
+let _appRef = null;   // applications_jobseeker 문서 ref
+let _userRef = null;  // users/{uid} 문서 ref
+
+async function findMyApplication(uid){
+  const qy = query(
+    collection(db, "applications_jobseeker"),
+    where("ownerUid", "==", uid),
+    limit(1)
+  );
+  const snap = await getDocs(qy);
+  if(snap.empty) return null;
+  const d = snap.docs[0];
+  return { ref: d.ref, data: d.data() || {} };
+}
+
+async function loadMine(uid, email){
+  setText("mpMeta", "내 정보를 불러오는 중…");
+  setText("mpStatus", "");
+
+  _userRef = doc(db, "users", uid);
+
+  // 1) applications_jobseeker에서 내 문서(ownerUid) 우선 로드
+  let src = null;
+  try{
+    src = await findMyApplication(uid);
+  }catch(e){
+    console.error("findMyApplication error:", e);
+  }
+
+  // 2) users/{uid}도 읽어서 부족한 필드는 채움
+  let userSnap = null;
+  try{
+    userSnap = await getDoc(_userRef);
+  }catch(e){
+    console.warn("users/{uid} read error:", e);
+  }
+
+  const a = src?.data || {};
+  const u = userSnap?.exists() ? (userSnap.data() || {}) : {};
+
+  _appRef = src?.ref || null;
+
+  // 폼 채우기: applications_jobseeker → users/{uid} 순서로 fallback
+  const name = pickFirst(a, ["name"]) || pickFirst(u, ["name"]);
+  const phone = pickFirst(a, ["phone"]) || pickFirst(u, ["phone"]);
+  const category = pickFirst(a, ["category"]) || pickFirst(u, ["category"]);
+  const provCode = pickFirst(a, ["provinceCode"]) || pickFirst(u, ["provinceCode"]);
+  const city = pickFirst(a, ["city"]) || pickFirst(u, ["city"]) || pickFirst(a, ["district"]) || pickFirst(u, ["district"]);
+  const photo = pickFirst(a, ["photo"]) || pickFirst(u, ["photo"]);
+  const skills = pickFirst(a, ["skills"]) || pickFirst(u, ["skills"]);
+  const profile = pickFirst(a, ["profile"]) || pickFirst(u, ["profile"]);
+
+  setVal("mpName", name);
+  setVal("mpPhone", phone);
+  setVal("mpCategory", category);
+  setVal("mpProvince", provCode);
+  setVal("mpCity", city);
+  setVal("mpPhoto", photo);
+  setVal("mpSkills", skills);
+  setVal("mpProfile", profile);
+
+  const whereTxt = provCode ? `${provinceNameOf(provCode)} ${city ? "(" + city + ")" : ""}` : (city || "-");
+  const srcTxt = _appRef ? "applications_jobseeker 기반" : "users/{uid} 기반";
+  setText("mpMeta", `${srcTxt} 로드 완료 · ${whereTxt}`);
+
+  // 만약 applications 문서가 없는데 users/{uid}도 없으면 최초 안내
+  if(!_appRef && !(userSnap && userSnap.exists())){
+    setText("mpStatus", "아직 저장된 내 문서가 없습니다. 입력 후 저장하면 생성됩니다.");
+  }
+}
+
+function buildPayload(uid, email){
+  const provinceCode = val("mpProvince");
+  const provinceName = provinceNameOf(provinceCode);
+
   return {
-    name: data?.name ?? "",
-    phone: data?.phone ?? "",
-    category: data?.category ?? "",
-    workStatus: data?.workStatus ?? "",
-    skills: data?.skills ?? "",
-    profile: data?.profile ?? "",
-    photo: data?.photo ?? ""
+    ownerUid: uid,
+    ownerEmail: email || "",
+    name: val("mpName"),
+    phone: val("mpPhone"),
+    category: val("mpCategory"),
+    provinceCode,
+    provinceName,
+    city: val("mpCity"),
+    photo: val("mpPhoto"),
+    skills: val("mpSkills"),
+    profile: val("mpProfile"),
+    updatedAt: serverTimestamp()
   };
 }
 
-function fillForm(p){
-  setVal("fName", p.name);
-  setVal("fPhone", p.phone);
-  setVal("fCategory", p.category);
-  setVal("fWorkStatus", p.workStatus);
-  setVal("fSkills", p.skills);
-  setVal("fProfile", p.profile);
-  setVal("fPhoto", p.photo);
-}
+async function saveMine(uid, email){
+  const btn = $("btnSave");
+  if(btn) btn.disabled = true;
+  setText("mpStatus", "저장 중…");
 
-async function load(uid){
-  setMeta("불러오는 중…");
-  const ref = doc(db, "profiles", uid);
-  const snap = await getDoc(ref);
+  const payload = buildPayload(uid, email);
 
-  if(!snap.exists()){
-    setMeta("내 프로필 없음 (저장하면 생성됩니다)");
-    fillForm(pickProfile({}));
+  // 1) applications_jobseeker 업데이트(있으면 update, 없으면 새 문서 생성)
+  try{
+    if(_appRef){
+      await updateDoc(_appRef, payload);
+    }else{
+      // 내 applications 문서가 없으면 새로 만들기
+      const newRef = doc(collection(db, "applications_jobseeker"));
+      await setDoc(newRef, {
+        ...payload,
+        createdAt: serverTimestamp(),
+        status: "approved"
+      }, { merge: true });
+      _appRef = newRef;
+    }
+  }catch(e){
+    console.error("applications_jobseeker save error:", e);
+    setText("mpStatus", "저장 실패(applications_jobseeker). rules 확인 필요");
+    if(btn) btn.disabled = false;
     return;
   }
 
-  const p = pickProfile(snap.data() || {});
-  fillForm(p);
-  setMeta("프로필 로드 완료");
+  // 2) users/{uid} 동기화(없으면 생성)
+  try{
+    await setDoc(_userRef, {
+      ...payload,
+      createdAt: serverTimestamp()
+    }, { merge: true });
+  }catch(e){
+    console.error("users/{uid} save error:", e);
+    setText("mpStatus", "저장 실패(users/{uid}). rules 확인 필요");
+    if(btn) btn.disabled = false;
+    return;
+  }
+
+  setText("mpStatus", "저장 완료");
+  if(btn) btn.disabled = false;
 }
 
-async function save(uid, email){
-  const payload = {
-    name: val("fName"),
-    phone: val("fPhone"),
-    category: val("fCategory"),
-    workStatus: val("fWorkStatus"),
-    skills: val("fSkills"),
-    profile: val("fProfile"),
-    photo: val("fPhoto"),
-    email: email || "",
-    updatedAt: serverTimestamp()
-  };
+function bindUi(){
+  $("btnReload")?.addEventListener("click", async ()=>{
+    const u = auth.currentUser;
+    if(!u) return;
+    await loadMine(u.uid, u.email || "");
+  });
 
-  const ref = doc(db, "profiles", uid);
-
-  await setDoc(ref, {
-    ...payload,
-    uid,
-    createdAt: serverTimestamp()
-  }, { merge: true });
-
-  setMeta("저장 완료");
-}
-
-function bind(uid, email){
-  $("btnReload")?.addEventListener("click", ()=>load(uid));
   $("btnSave")?.addEventListener("click", async ()=>{
-    try{
-      setMeta("저장 중…");
-      await save(uid, email);
-    }catch(e){
-      console.error(e);
-      setMeta("저장 실패 (콘솔 확인)");
-      alert("저장 실패 (콘솔 확인)");
+    const u = auth.currentUser;
+    if(!u){
+      alert("로그인이 필요합니다.");
+      return;
     }
+    await saveMine(u.uid, u.email || "");
   });
 }
 
-const auth = getAuth();
-onAuthStateChanged(auth, async (user)=>{
-  if(!user){
-    setMeta("로그인이 필요합니다.");
-    alert("로그인이 필요합니다.");
-    location.href = "./index.html";
-    return;
-  }
+function boot(){
+  fillProvinceSelect($("mpProvince"));
+  bindUi();
 
-  setMeta("로그인됨: " + (user.email || user.uid));
-  bind(user.uid, user.email || "");
-  await load(user.uid);
-});
+  onAuthStateChanged(auth, async (user)=>{
+    if(!user){
+      alert("로그인이 필요합니다.");
+      location.href = "./index.html";
+      return;
+    }
+    await loadMine(user.uid, user.email || "");
+  });
+}
+
+boot();

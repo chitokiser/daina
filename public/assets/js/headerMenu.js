@@ -1,64 +1,43 @@
 // /public/assets/js/headerMenu.js
 export function wireHeaderMenuUi(){
-  const btnMenu = document.getElementById("btnMenu");
+  const btn = document.getElementById("btnMenu");
   const pop = document.getElementById("menuPop");
-  const btnLogin = document.getElementById("btnLogin");
-  const btnLoginMobile = document.getElementById("btnLoginMobile");
+  if(!btn || !pop) return;
 
-  if(!btnMenu || !pop) return;
+  if(btn.dataset.bound === "1") return;
+  btn.dataset.bound = "1";
 
-  function isOpen(){ return !pop.hidden; }
-
-  function openPop(){
+  function open(){
     pop.hidden = false;
-    btnMenu.setAttribute("aria-expanded", "true");
-    window.addEventListener("keydown", onKeydown);
-    document.addEventListener("click", onOutsideClick, true);
+    btn.setAttribute("aria-expanded","true");
+    document.addEventListener("click", onOutside, true);
+    window.addEventListener("keydown", onKey);
   }
-
-  function closePop(){
+  function close(){
     pop.hidden = true;
-    btnMenu.setAttribute("aria-expanded", "false");
-    window.removeEventListener("keydown", onKeydown);
-    document.removeEventListener("click", onOutsideClick, true);
+    btn.setAttribute("aria-expanded","false");
+    document.removeEventListener("click", onOutside, true);
+    window.removeEventListener("keydown", onKey);
   }
-
-  function togglePop(){
-    if(isOpen()) closePop();
-    else openPop();
+  function toggle(){
+    if(pop.hidden) open();
+    else close();
   }
-
-  function onKeydown(e){
-    if(e.key === "Escape") closePop();
-  }
-
-  function onOutsideClick(e){
+  function onOutside(e){
     const t = e.target;
-    if(pop.contains(t) || btnMenu.contains(t)) return;
-    closePop();
+    if(pop.contains(t) || btn.contains(t)) return;
+    close();
+  }
+  function onKey(e){
+    if(e.key === "Escape") close();
   }
 
-  // 항상 초기 숨김 보장
-  closePop();
-
-  btnMenu.addEventListener("click", (e)=>{
+  close();
+  btn.addEventListener("click", (e)=>{
     e.preventDefault();
     e.stopPropagation();
-    togglePop();
+    toggle();
   });
 
-  pop.querySelectorAll("a").forEach((a)=>{
-    a.addEventListener("click", closePop);
-  });
-
-  if(btnLogin && btnLoginMobile){
-    btnLoginMobile.addEventListener("click", ()=>{
-      btnLogin.click();
-      closePop();
-    });
-  }
-
-  window.addEventListener("resize", ()=>{
-    if(isOpen()) closePop();
-  });
+  pop.querySelectorAll("a").forEach(a=> a.addEventListener("click", close));
 }

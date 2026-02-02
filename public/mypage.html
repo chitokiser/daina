@@ -14,65 +14,41 @@
   <script defer src="./assets/js/partials.js"></script>
   <script type="module" defer src="./assets/js/main.js"></script>
   <script type="module" defer src="./assets/js/mypagePage.js"></script>
-
-  <style>
-    .container{ max-width: 860px; margin:0 auto; padding: 16px 14px 42px; }
-    .panel{ background:#fff; border:1px solid rgba(11,18,32,.10); border-radius:16px; box-shadow: 0 10px 30px rgba(11,18,32,.05); padding:14px; }
-    .h1{ margin:0; font-size:20px; letter-spacing:-0.2px; }
-    .sub{ color: rgba(11,18,32,.62); font-size:13px; line-height:1.45; margin-top:6px; }
-    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:12px; }
-    .field label{ display:block; font-size:12px; color:rgba(11,18,32,.62); margin: 2px 0 6px; }
-    .field input, .field select, .field textarea{
-      width:100%;
-      border:1px solid rgba(11,18,32,.14);
-      border-radius:12px;
-      padding:10px 12px;
-      font-size:14px;
-      outline:none;
-      background:#fff;
-    }
-    .field textarea{ min-height:96px; resize:vertical; }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-    .btn{ border:1px solid rgba(11,18,32,.14); background:#fff; border-radius:12px; padding:10px 12px; font-size:13px; cursor:pointer; }
-    .btn.blue{ background:#1f6feb; border-color:#1f6feb; color:#fff; }
-    .pill{ display:inline-flex; align-items:center; border:1px solid rgba(11,18,32,.12); border-radius:999px; padding:6px 10px; font-size:12px; color:rgba(11,18,32,.72); background: rgba(11,18,32,.03); }
-    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-
-    @media (max-width: 720px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-  </style>
 </head>
+
 <body>
   <div class="page">
     <div id="site-header"></div>
 
     <main class="main">
       <div class="container">
+
         <section class="panel">
-          <div class="row">
+          <div class="hrow">
             <div>
               <h1 class="h1">마이페이지</h1>
-              <div class="sub">내 프로필을 수정할 수 있습니다. 저장하면 바로 반영됩니다.</div>
+              <div class="sub" id="mpMeta">내 정보를 불러오는 중…</div>
             </div>
-            <span class="pill" id="meMeta">로그인 확인중…</span>
+            <button class="btn ghost" id="btnReload" type="button">새로고침</button>
           </div>
 
-          <div class="grid">
-            <div class="field">
-              <label>이름</label>
-              <input id="fName" placeholder="예: 홍길동" />
+          <div class="grid2" style="margin-top:12px;">
+            <div>
+              <label class="label">이름</label>
+              <input class="input" id="mpName" placeholder="예: 김철수" />
             </div>
-
-            <div class="field">
-              <label>전화</label>
-              <input id="fPhone" placeholder="예: 010-1234-5678" />
+            <div>
+              <label class="label">전화</label>
+              <input class="input" id="mpPhone" placeholder="예: 010-1234-5678" />
             </div>
+          </div>
 
-            <div class="field">
-              <label>카테고리</label>
-              <select id="fCategory">
+          <div class="grid2" style="margin-top:10px;">
+            <div>
+              <label class="label">카테고리</label>
+              <select class="input" id="mpCategory">
                 <option value="">선택</option>
+                <option value="koreaservice">한국서비스직</option>
                 <option value="domestic_tech">베트남기술직</option>
                 <option value="domestic_student">베트남단순생산직</option>
                 <option value="domestic_service">베트남서비스직</option>
@@ -80,47 +56,71 @@
                 <option value="vn_vehicle">베트남지입차량</option>
                 <option value="korean_expat">한국기술직</option>
                 <option value="seasonal_worker">한국계절근로자</option>
-                <option value="koreaservice">한국서비스직</option>
               </select>
             </div>
 
-            <div class="field">
-              <label>근무 상태</label>
-              <select id="fWorkStatus">
-                <option value="">선택</option>
-                <option value="available">가능</option>
-                <option value="working">근무중</option>
-                <option value="leave">휴직</option>
-                <option value="unknown">미정</option>
-              </select>
-            </div>
-
-            <div class="field" style="grid-column: 1 / -1;">
-              <label>특기 / 스킬</label>
-              <input id="fSkills" placeholder="예: 조리, 운전, 용접, 통역" />
-            </div>
-
-            <div class="field" style="grid-column: 1 / -1;">
-              <label>소개 / 프로필</label>
-              <textarea id="fProfile" placeholder="간단 소개를 적어주세요"></textarea>
-            </div>
-
-            <div class="field" style="grid-column: 1 / -1;">
-              <label>프로필 사진 URL (선택)</label>
-              <input id="fPhoto" placeholder="https://..." />
-              <div class="sub">승인된 프로필 사진만 공개 페이지에 노출되도록 규칙을 둘 수도 있습니다.</div>
+            <div>
+              <label class="label">지역</label>
+              <div class="grid2" style="grid-template-columns: 1fr 1fr; gap:10px;">
+                <select class="input" id="mpProvince"></select>
+                <input class="input" id="mpCity" placeholder="예: Cầu Giấy" />
+              </div>
             </div>
           </div>
 
-          <div class="actions">
+          <div style="margin-top:10px;">
+            <label class="label">프로필 사진 URL (선택)</label>
+            <input class="input" id="mpPhoto" placeholder="https://..." />
+            <div class="sub" style="margin-top:6px;">사진은 URL로만 저장합니다. (Storage 업로드는 다음 단계)</div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <label class="label">기술 / 스킬</label>
+            <input class="input" id="mpSkills" placeholder="예: 통역, 요리, 운전, 용접..." />
+          </div>
+
+          <div style="margin-top:10px;">
+            <label class="label">소개 / 프로필</label>
+            <textarea class="input" id="mpProfile" rows="5" placeholder="경력, 가능업무, 선호조건 등을 적어주세요"></textarea>
+          </div>
+
+          <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px;">
             <button class="btn blue" id="btnSave" type="button">저장</button>
-            <button class="btn" id="btnReload" type="button">다시 불러오기</button>
+            <span class="sub" id="mpStatus"></span>
+          </div>
+
+          <div class="panel" style="margin-top:14px; background:#f8fafc;">
+            <div class="sub">
+              저장 위치
+              - applications_jobseeker: ownerUid == 내 uid 인 문서를 찾아서 업데이트
+              - users/{uid}: 내 uid 문서로 동기화(없으면 생성)
+            </div>
           </div>
         </section>
+
       </div>
     </main>
 
     <div id="site-footer"></div>
   </div>
+
+  <style>
+    /* /public/mypage.html inline */
+    .label{ display:block; font-size:12px; color:rgba(11,18,32,.65); margin:6px 0; }
+    .input{
+      width:100%;
+      border:1px solid rgba(11,18,32,.14);
+      border-radius:12px;
+      padding:10px 12px;
+      font-size:14px;
+      background:#fff;
+      outline:none;
+    }
+    .input:focus{ border-color: rgba(59,130,246,.45); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    .grid2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    @media (max-width: 760px){
+      .grid2{ grid-template-columns:1fr; }
+    }
+  </style>
 </body>
 </html>

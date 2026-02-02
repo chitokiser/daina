@@ -1,103 +1,115 @@
 // /public/assets/js/roles.js
-import { db, auth } from "./firebaseApp.js";
+import { auth, db } from "./firebaseApp.js";
 
 import {
+  onAuthStateChanged,
   GoogleAuthProvider,
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
-  onAuthStateChanged
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-import {
-  doc,
-  getDoc
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-function $(id){ return document.getElementById(id); }
+let cachedRole = null;
+let _inited = false;
+let _bound = false;
 
-async function isAdminByUid(uid){
-  if(!uid) return false;
-  const ref = doc(db, "roles", uid);
-  const snap = await getDoc(ref);
-  return snap.exists() && snap.data()?.admin === true;
-}
+async function getMyRole(){
+  const u = auth.currentUser;
+  if(!u) return null;
+  if(cachedRole) return cachedRole;
 
-function setRoleBadge(role){
-  const el = $("roleBadge");
-  if(!el) return;
-  if(!role){
-    el.style.display = "none";
-    el.textContent = "";
-    return;
+  try{
+    const ref = doc(db, "roles", u.uid);
+    const snap = await getDoc(ref);
+    cachedRole = snap.exists() ? (snap.data().role || null) : null;
+    return cachedRole;
+  }catch(e){
+    // roles read가 rules 때문에 막혀도 로그인 자체는 동작해야 함
+    return null;
   }
-  el.style.display = "inline-flex";
-  el.textContent = "role: " + role;
 }
 
-function showAdminLinks(show){
-  const a1 = $("adminLink");
-  const a2 = $("adminLinkMobile");
-  if(a1) a1.style.display = show ? "" : "none";
-  if(a2) a2.style.display = show ? "" : "none";
+async function refreshRole(){
+  const roleBadge = document.getElementById("roleBadge");
+  const role = await getMyRole().catch(()=>null);
+
+  if(roleBadge) roleBadge.textContent = "role: " + (role || "-");
+
+  document.querySelectorAll(".adminOnly").forEach(el=>{
+    el.style.display = (role === "admin") ? "" : "none";
+  });
 }
 
-async function refreshHeaderUi(user){
-  const btn = $("btnLogin");
-  if(btn){
-    btn.textContent = user ? "로그아웃" : "구글 로그인";
-  }
+export async function initAuth(){
+  if(_inited) return;
+  _inited = true;
 
-  if(!user){
-    setRoleBadge("");
-    showAdminLinks(false);
-    return;
+  try{
+    await setPersistence(auth, browserLocalPersistence);
+  }catch(e){
+    // ignore
   }
 
-  const admin = await isAdminByUid(user.uid);
-  setRoleBadge(admin ? "admin" : "user");
-  showAdminLinks(!!admin);
-}
-
-let _wired = false;
-
-export async function wireHeaderAuthUi(){
-  if(_wired) return;
-  _wired = true;
-
-  // redirect 결과 처리 (가장 먼저)
   try{
     await getRedirectResult(auth);
   }catch(e){
-    console.error("getRedirectResult error:", e);
-    alert("로그인 실패: 콘솔 확인");
+    // redirect 실패는 사용자에게 보이게
+    console.error(e);
   }
+}
 
-  // 로그인/로그아웃 버튼 연결
-  const btn = $("btnLogin");
-  if(btn){
+export function wireHeaderAuthUi(){
+  if(_bound) return;
+  _bound = true;
+
+  const btnLogin = document.getElementById("btnLogin");
+  const btnLogout = document.getElementById("btnLogout");
+  const roleBadge = document.getElementById("roleBadge");
+
+  if(!btnLogin) return;
+
+  onAuthStateChanged(auth, async (user)=>{
+    cachedRole = null;
+    if(user){
+      btnLogin.style.display = "none";
+      if(btnLogout) btnLogout.style.display = "";
+      await refreshRole();
+    }else{
+      btnLogin.style.display = "";
+      if(btnLogout) btnLogout.style.display = "none";
+      if(roleBadge) roleBadge.textContent = "role: -";
+      document.querySelectorAll(".adminOnly").forEach(el=> el.style.display="none");
+    }
+  });
+
+  btnLogin.addEventListener("click", async ()=>{
     const provider = new GoogleAuthProvider();
-    btn.addEventListener("click", async ()=>{
-      if(auth.currentUser){
-        try{
-          await signOut(auth);
-        }catch(e){
-          console.error(e);
-          alert("로그아웃 실패 (콘솔 확인)");
-        }
-        return;
-      }
+
+    // 팝업 시도 → 막히면 redirect로 자동 전환
+    try{
+      await signInWithPopup(auth, provider);
+    }catch(e){
+      console.error(e);
       try{
         await signInWithRedirect(auth, provider);
-      }catch(e){
-        console.error(e);
-        alert("로그인 시작 실패 (콘솔 확인)");
+      }catch(e2){
+        console.error(e2);
+        alert("로그인 시작 실패. 콘솔 에러를 확인하세요.");
       }
-    });
-  }
+    }
+  });
 
-  // 상태 변화 반영
-  onAuthStateChanged(auth, (user)=>{
-    refreshHeaderUi(user);
+  btnLogout?.addEventListener("click", async ()=>{
+    try{
+      await signOut(auth);
+    }catch(e){
+      console.error(e);
+      alert("로그아웃 실패. 콘솔 확인");
+    }
   });
 }
